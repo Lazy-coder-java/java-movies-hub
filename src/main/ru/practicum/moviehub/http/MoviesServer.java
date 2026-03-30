@@ -13,7 +13,10 @@ public class MoviesServer {
     public MoviesServer(MoviesStore store, int port) {
         try {
             server = HttpServer.create(new InetSocketAddress(port), 0);
+
             server.createContext("/movies", new MoviesHandler(store));
+            server.createContext("/movies/", new MovieByIdHandler(store));
+
         } catch (IOException e) {
             throw new RuntimeException("Ошибка запуска сервера", e);
         }

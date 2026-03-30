@@ -23,32 +23,19 @@ public class MoviesHandler extends BaseHttpHandler {
     public void handle(HttpExchange ex) throws IOException {
 
         String method = ex.getRequestMethod();
-        String path = ex.getRequestURI().getPath();
         String query = ex.getRequestURI().getQuery();
 
         try {
 
-            if (path.matches("/movies/\\d+")) {
-                handleById(ex, method, path);
-                return;
+            if ("GET".equalsIgnoreCase(method)) {
+                handleGetAll(ex, query);
+
+            } else if ("POST".equalsIgnoreCase(method)) {
+                handlePost(ex);
+
+            } else {
+                sendError(ex, 405, "Метод не поддерживается");
             }
-
-            if (path.equals("/movies")) {
-
-                if ("GET".equalsIgnoreCase(method)) {
-                    handleGetAll(ex, query);
-
-                } else if ("POST".equalsIgnoreCase(method)) {
-                    handlePost(ex);
-
-                } else {
-                    sendError(ex, 405, "Метод не поддерживается"); // ❗ FIX
-                }
-
-                return;
-            }
-
-            sendError(ex, 404, "Не найдено");
 
         } finally {
             ex.close();
@@ -119,43 +106,5 @@ public class MoviesHandler extends BaseHttpHandler {
         }
 
         return errors;
-    }
-
-    private void handleById(HttpExchange ex, String method, String path) throws IOException {
-
-        String idStr = path.substring("/movies/".length());
-
-        int id;
-
-        try {
-            id = Integer.parseInt(idStr);
-        } catch (NumberFormatException e) {
-            sendError(ex, 400, "Некорректный ID");
-            return;
-        }
-
-        if ("GET".equalsIgnoreCase(method)) {
-
-            Movie movie = store.getById(id);
-
-            if (movie == null) {
-                sendError(ex, 404, "Фильм не найден");
-            } else {
-                sendJson(ex, 200, movie);
-            }
-
-        } else if ("DELETE".equalsIgnoreCase(method)) {
-
-            boolean deleted = store.delete(id);
-
-            if (deleted) {
-                sendNoContent(ex);
-            } else {
-                sendError(ex, 404, "Фильм не найден");
-            }
-
-        } else {
-            sendError(ex, 405, "Метод не поддерживается");
-        }
     }
 }
